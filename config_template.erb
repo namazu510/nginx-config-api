@@ -4,27 +4,23 @@
 # ---------------------------------------------------
 server {
 	# basic setting
-  server_name	<%= sub_domain %>.t-lab.cs.teu.ac.jp;
-  include "conf/includes/lets-http.conf";
-}
-
-server {
-
-	# basic setting
-  server_name	<%= sub_domain %>.t-lab.cs.teu.ac.jp;
+  server_name	<%= domain %>;
 
 	# access log
 	access_log off;
 	error_log on;
 
 	# SSL&Auth setting
-  include "conf/includes/lets.conf";
-  include "conf/includes/internal.conf";
-	include "conf/includes/header.conf";
+  include "includes/lets.conf";
+	include "includes/header.conf";
+
+	ssl_trusted_certificate /etc/letsencrypt/live/<%= domain %>/fullchain.pem;
+	ssl_certificate         /etc/letsencrypt/live/<%= domain %>/fullchain.pem;
+	ssl_certificate_key     /etc/letsencrypt/live/<%= domain %>/privkey.pem;
 
 	# Reverse Proxy
 	location / {
-  proxy_pass http://<%= sub_domain %>.<%= internal_address %>;
+  	proxy_pass http://<%= internal_domain %>;
 	}
 }
 

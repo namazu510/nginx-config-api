@@ -1,10 +1,22 @@
 production:
+  lets:
+    cmd: "certbot certonly"
+    email: "tlab-admin@googlegroups.com"
+    webroot_dir: "/var/www/lets/"
   nginx:
     conf_dir: "/etc/nginx/conf.d/"
+    reload_cmd: "systemctl reload nginx"
   domain:
-    base: "k8s.t-lab.cs.teu.ac.jp"
+    base: "t-lab.cs.teu.ac.jp"
+    internal_base: "k8s-nodes.internal.t-lab.cs.teu.ac.jp"
 develop:
+  lets:
+    cmd: "echo"
+    email: "moufmofu@shippo.com"
+    webroot_dir: "."
   nginx:
     conf_dir: "."
+    reload_cmd: "echo systemctl reload nginx"
   domain:
-    base: "k8s.t-lab.cs.teu.ac.jp"
+    base: ".t-lab.cs.teu.ac.jp"
+    internal_base: "k8s-nodes.internal.t-lab.cs.teu.ac.jp"

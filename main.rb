@@ -5,9 +5,19 @@ require 'yaml'
 require 'pathname'
 require 'erb'
 require 'logger'
+require 'open3'
 
 CONFIG = YAML.load_file('./config.yml')
 ENV = development? ? 'develop' : 'production'
+
+begin
+  File.open('domain-store.dump', 'r') do |f|
+    DOMAIN_STORE = Marshal.load(f)
+  end
+rescue
+  DOMAIN_STORE = []
+end
+
 
 configure do
   mime_type :text, 'text/plain'
@@ -18,26 +28,94 @@ get '/' do
 end
 
 post '/route/*' do |sub_domain|
-  if sub_domain.empty? || sub_domain.include?('.') then
+  if domain_exist?(sub_domain)
     status 400
-    json :isSuccess => false, :message => 'Invaild domain.'
+    json isSuccess: false, message: 'Invalid domain.'
   else
-    # json :isSuccess => true, :message => 'Successful request!'
-    content_type :text
-    write_config_file(sub_domain)
+    add_route(sub_domain)
+    json isSucess: true, message: 'Successful request!'
+  end
+end
+
+delete '/route/*' do |sub_domain|
+  if !domain_exist?(sub_domain)
+    status 404
+    json isSuccess: false, message: 'Domain is not registered'
+  else
+    delete_route(sub_domain)
+    json isSucess: true, message: 'Successful request!'
   end
 end
 
 # ----------
 # functions
 # ----------
+def add_route(sub_domain)
+  ssl_cert_request(sub_domain)
+  write_config_file(sub_domain)
+  DOMAIN_STORE << sub_domain
+  save_domain_store
+  reload_nginx
+end
+
+def delete_route(sub_domain)
+  delete_config_file(sub_domain)
+  DOMAIN_STORE.delete(sub_domain)
+  save_domain_store
+  reload_nginx
+end
+
+def save_domain_store
+  File.open('domain-store.dump', 'w') do |f|
+    Marshal.dump(DOMAIN_STORE)
+  end
+end
+
 def write_config_file(sub_domain)
   path = Pathname.new(CONFIG[ENV]['nginx']['conf_dir'])
   path += sub_domain + '.conf'
 
-  internal_address = CONFIG[ENV]['domain']['base'] 
+  domain = absolute_domain(sub_domain)
+  internal_domain = CONFIG[ENV]['domain']['internal_base']
 
   erb = ERB.new(File.read('./config_template.erb'))
+  File.open(path, mode = 'w') do |f|
+    f.write(erb.result(binding))
+  end
+end
 
-  erb.result(binding)
+def delete_config_file(sub_domain)
+  path = Pathname.new(CONFIG[ENV]['nginx']['conf_dir'])
+  path += sub_domain + '.conf'
+
+  fail 'config file dose not exist' unless path.exist?
+  path.delete
+end
+
+def ssl_cert_request(sub_domain)
+  lets_conf = CONFIG[ENV]['lets']
+  cmd = lets_conf['cmd']
+  email = lets_conf['email']
+  domain = absolute_domain(sub_domain)
+  webroot_path = lets_conf['webroot_dir'] + domain
+
+  `mkdir -p #{webroot_path}`
+  command = "#{cmd} --webroot -w #{webroot_path} -d #{domain} --email #{email}"
+  o, e, s = Open3.capture3(command)
+  fail "ssl_cert request faild! \n #{e}" unless s.success?
+  o
+end
+
+def reload_nginx
+  cmd = CONFIG[ENV]['nginx']['reload_cmd']
+  `#{cmd}`
+end
+
+def domain_exist?(sub_domain)
+  DOMAIN_STORE.include? sub_domain
+end
+
+def absolute_domain(sub_domain)
+  base = CONFIG[ENV]['domain']['base']
+  sub_domain + base
 end
