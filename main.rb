@@ -77,6 +77,7 @@ def write_config_file(sub_domain)
 
   domain = absolute_domain(sub_domain)
   internal_domain = CONFIG[ENV]['domain']['internal_base']
+  secure_domain = sub_domain.end_with? 'ks'
 
   erb = ERB.new(File.read('./config_template.erb'))
   File.open(path, mode = 'w') do |f|
