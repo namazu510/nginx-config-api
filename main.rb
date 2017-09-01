@@ -100,7 +100,8 @@ def ssl_cert_request(sub_domain)
   webroot_path = lets_conf['webroot_dir'] + domain
 
   `mkdir -p #{webroot_path}`
-  command = "#{cmd} --webroot -w #{webroot_path} -d #{domain} --email #{email}"
+  command = "#{cmd}  --agree-tos --webroot -w #{webroot_path} -d #{domain} --email #{email}"
+  puts command
   o, e, s = Open3.capture3(command)
   fail "ssl_cert request faild! \n #{e}" unless s.success?
   o
@@ -117,5 +118,5 @@ end
 
 def absolute_domain(sub_domain)
   base = CONFIG[ENV]['domain']['base']
-  sub_domain + base
+  sub_domain  + '.' + base
 end
