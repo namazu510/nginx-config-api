@@ -101,6 +101,8 @@ end
 
 def ssl_cert_request(sub_domain)
   lets_conf = CONFIG[ENV]['lets']
+  return unless lets_conf['enable']
+
   cmd = lets_conf['cmd']
   email = lets_conf['email']
   domain = absolute_domain(sub_domain)
