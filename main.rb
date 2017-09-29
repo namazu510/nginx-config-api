@@ -79,6 +79,12 @@ def write_config_file(sub_domain)
   internal_domain = CONFIG[ENV]['domain']['internal_base']
   secure_domain = sub_domain.end_with? 'ks'
 
+  show_log  = CONFIG[ENV]['nginx']['app_log']
+  use_ssl   = CONFIG[ENV]['nginx']['ssl']
+  use_lets  = CONFIG[ENV]['lets']['enable']
+  dummy_ssl = CONFIG[ENV]['nginx']['dummy_ssl']
+
+
   erb = ERB.new(File.read('./config_template.erb'))
   File.open(path, mode = 'w') do |f|
     f.write(erb.result(binding))

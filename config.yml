@@ -1,9 +1,13 @@
 production:
   lets:
+    enable: false
     cmd: "certbot certonly"
     email: "tlab-admin@googlegroups.com"
     webroot_dir: "/var/www/lets/"
   nginx:
+    ssl: true
+    dummy_ssl: true
+    app_log: true
     conf_dir: "/etc/nginx/conf.d/"
     reload_cmd: "systemctl reload nginx"
   domain:
@@ -11,10 +15,14 @@ production:
     internal_base: "k8s-nodes.internal.t-lab.cs.teu.ac.jp"
 develop:
   lets:
+    enable: false
     cmd: "echo"
     email: "moufmofu@shippo.com"
     webroot_dir: "."
   nginx:
+    ssl: true
+    dummy_ssl : true
+    app_log: true
     conf_dir: "."
     reload_cmd: "echo systemctl reload nginx"
   domain:

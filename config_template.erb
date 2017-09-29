@@ -7,21 +7,40 @@ server {
   server_name	<%= domain %>;
 
 	# access log
-	access_log off;
-	error_log on;
+	<% if show_log %>
+		access_log /var/log/nginx/<%= domain %>/access.log;
+		error_log  /var/log/nginx/<%= domain %>/error.log;
+	<% else %>
+		access_log off;
+		error_log off;
+	<% end %>
 
-	# SSL&Auth setting
-  include "includes/lets.conf";
-	include "includes/header.conf";
-
+	# Auth setting
 	<% if secure_domain %>
 	include "includes/internal.conf";
 	<% end %>
 
+	# SSL setting
+	<% unless use_ssl %>
+	listen 80;
+	<% end %>
+
+	<% if use_lets %>
+  include "includes/lets.conf";
 	ssl_trusted_certificate /etc/letsencrypt/live/<%= domain %>/fullchain.pem;
 	ssl_certificate         /etc/letsencrypt/live/<%= domain %>/fullchain.pem;
 	ssl_certificate_key     /etc/letsencrypt/live/<%= domain %>/privkey.pem;
+	<% end %>
 
+	<% if dummy_ssl %>
+	listen 443;
+	ssl on;
+	ssl_certificate     /etc/pki/tls/certs/server.crt
+	ssl_certificate_key /etc/pki/tls/private/server.key
+	<% end %>
+
+
+	include "includes/header.conf";
 	# Reverse Proxy
 	location / {
   	proxy_pass http://<%= internal_domain %>;
