@@ -60,6 +60,7 @@ end
 
 def delete_route(sub_domain)
   delete_config_file(sub_domain)
+  delete_ssl_certs(sub_dmain)
   DOMAIN_STORE.delete(sub_domain)
   save_domain_store
   reload_nginx
@@ -114,6 +115,15 @@ def ssl_cert_request(sub_domain)
   o, e, s = Open3.capture3(command)
   fail "ssl_cert request faild! \n #{e}" unless s.success?
   o
+end
+
+def delete_ssl_certs(sub_domain)
+  lets_conf = CONFIG[ENV]['lets']
+  return unless lets_conf['enable']
+
+  domain = absolute_domain(sub_domain)
+  `rm -rf /etc/letsencrypt/live/#{domain}`
+  `rm -rf /etc/letsencrypt/renewal/#{domain}.conf`
 end
 
 def reload_nginx
