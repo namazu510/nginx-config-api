@@ -6,9 +6,14 @@ require 'pathname'
 require 'erb'
 require 'logger'
 require 'open3'
+require 'thread'
 
 CONFIG = YAML.load_file('./config.yml')
 ENV = development? ? 'develop' : 'production'
+
+CERT_LOCK = Mutex.new
+STORE_LOCK = Mutex.new
+NGINX_LOCK = Mutex.new
 
 begin
   File.open('domain-store.dump', 'r') do |f|
@@ -67,8 +72,10 @@ def delete_route(sub_domain)
 end
 
 def save_domain_store
-  File.open('domain-store.dump', 'w') do |f|
-    Marshal.dump(DOMAIN_STORE)
+  STORE_LOCK.synchronize do
+    File.open('domain-store.dump', 'w') do |f|
+      Marshal.dump(DOMAIN_STORE)
+    end
   end
 end
 
@@ -112,9 +119,11 @@ def ssl_cert_request(sub_domain)
   `mkdir -p #{webroot_path}`
   command = "#{cmd}  --agree-tos --webroot -w #{webroot_path} -d #{domain} --email #{email}"
   puts command
-  o, e, s = Open3.capture3(command)
-  fail "ssl_cert request faild! \n #{e}" unless s.success?
-  o
+  CERT_LOCK.synchronize do
+    o, e, s = Open3.capture3(command)
+    puts o
+    fail "ssl_cert request faild! \n #{e}" unless s.success?
+  end
 end
 
 def delete_ssl_certs(sub_domain)
@@ -130,7 +139,10 @@ end
 
 def reload_nginx
   cmd = CONFIG[ENV]['nginx']['reload_cmd']
-  `#{cmd}`
+  NGINX_LOCK.synchronize do
+    o, e, s = Open3.capture3(cmd)
+    fail "nginx reload faild!" unless s.success?
+  end
 end
 
 def domain_exist?(sub_domain)
