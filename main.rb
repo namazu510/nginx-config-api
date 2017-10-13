@@ -65,7 +65,7 @@ end
 
 def delete_route(sub_domain)
   delete_config_file(sub_domain)
-  delete_ssl_certs(sub_dmain)
+  delete_ssl_certs(sub_domain)
   DOMAIN_STORE.delete(sub_domain)
   save_domain_store
   reload_nginx
