@@ -92,6 +92,9 @@ def write_config_file(sub_domain)
   use_lets  = CONFIG[ENV]['lets']['enable']
   dummy_ssl = CONFIG[ENV]['nginx']['dummy_ssl']
 
+  if show_log
+    `mkdir /var/log/nginx/#{domain}`
+  end
 
   erb = ERB.new(File.read('./config_template.erb'))
   File.open(path, mode = 'w') do |f|
