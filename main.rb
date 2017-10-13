@@ -122,8 +122,10 @@ def delete_ssl_certs(sub_domain)
   return unless lets_conf['enable']
 
   domain = absolute_domain(sub_domain)
-  `rm -rf /etc/letsencrypt/live/#{domain}`
-  `rm -rf /etc/letsencrypt/renewal/#{domain}.conf`
+  confdirs = %W(archive/#{domain} live/#{domain} renewal/#{domain}.conf)
+  confdirs.each do |dir|
+    `rm -rf /etc/letsencrypt/#{dir}`
+  end
 end
 
 def reload_nginx
