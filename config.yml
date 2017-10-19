@@ -8,7 +8,7 @@ production:
     ssl: true
     dummy_ssl: true
     app_log: true
-    conf_dir: "/etc/nginx/conf.d/"
+    conf_dir: "/etc/nginx/conf.d/api-reg-hosts"
     reload_cmd: "systemctl reload nginx"
   domain:
     base: "t-lab.cs.teu.ac.jp"
