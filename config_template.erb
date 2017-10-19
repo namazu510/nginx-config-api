@@ -8,24 +8,24 @@ server {
 
 	# access log
 	<% if show_log %>
-		access_log /var/log/nginx/<%= domain %>/access.log;
-		error_log  /var/log/nginx/<%= domain %>/error.log;
+	access_log /var/log/nginx/<%= domain %>/access.log;
+	error_log  /var/log/nginx/<%= domain %>/error.log;
 	<% else %>
-		access_log off;
-		error_log off;
+	access_log off;
+	error_log off;
 	<% end %>
 
-	# Auth setting
 	<% if secure_domain %>
+	# Auth setting
 	include "includes/internal.conf";
 	<% end %>
 
-	# SSL setting
 	<% unless use_ssl %>
 	listen 80;
 	<% end %>
 
 	<% if use_lets %>
+	# SSL setting
   include "includes/lets.conf";
 	ssl_trusted_certificate /etc/letsencrypt/live/<%= domain %>/fullchain.pem;
 	ssl_certificate         /etc/letsencrypt/live/<%= domain %>/fullchain.pem;
@@ -33,12 +33,12 @@ server {
 	<% end %>
 
 	<% if dummy_ssl %>
+	# SSL setting
 	listen 443;
 	ssl on;
 	ssl_certificate     /etc/pki/tls/certs/server.crt;
 	ssl_certificate_key /etc/pki/tls/private/server.key;
 	<% end %>
-
 
 	include "includes/header.conf";
 	# Reverse Proxy
