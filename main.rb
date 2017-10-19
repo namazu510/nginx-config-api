@@ -7,22 +7,15 @@ require 'erb'
 require 'logger'
 require 'open3'
 require 'thread'
+require 'active_record'
+
+require './models/domain'
 
 CONFIG = YAML.load_file('./config.yml')
 ENV = development? ? 'develop' : 'production'
 
 CERT_LOCK = Mutex.new
-STORE_LOCK = Mutex.new
 NGINX_LOCK = Mutex.new
-
-begin
-  File.open('domain-store.dump', 'r') do |f|
-    DOMAIN_STORE = Marshal.load(f)
-  end
-rescue
-  DOMAIN_STORE = []
-end
-
 
 configure do
   mime_type :text, 'text/plain'
@@ -33,7 +26,7 @@ get '/' do
 end
 
 post '/route/*' do |sub_domain|
-  if domain_exist?(sub_domain)
+  if get_domain(sub_domain)
     status 400
     json isSuccess: false, message: 'Invalid domain.'
   else
@@ -43,11 +36,12 @@ post '/route/*' do |sub_domain|
 end
 
 delete '/route/*' do |sub_domain|
-  if !domain_exist?(sub_domain)
+  domain = get_domain(sub_domain)
+  if domain.nil?
     status 404
     json isSuccess: false, message: 'Domain is not registered'
   else
-    delete_route(sub_domain)
+    delete_route(domain)
     json isSucess: true, message: 'Successful request!'
   end
 end
@@ -56,28 +50,19 @@ end
 # functions
 # ----------
 def add_route(sub_domain)
-  ssl_cert_request(sub_domain)
   write_config_file(sub_domain)
-  DOMAIN_STORE << sub_domain
-  save_domain_store
+  ssl_cert_update()
+
   reload_nginx
 end
 
-def delete_route(sub_domain)
-  delete_config_file(sub_domain)
-  delete_ssl_certs(sub_domain)
-  DOMAIN_STORE.delete(sub_domain)
-  save_domain_store
+def delete_route(domain)
+  delete_config_file(domain)
+  delete_ssl_certs(domain)
+  domain.destroy
   reload_nginx
 end
 
-def save_domain_store
-  STORE_LOCK.synchronize do
-    File.open('domain-store.dump', 'w') do |f|
-      Marshal.dump(DOMAIN_STORE)
-    end
-  end
-end
 
 def write_config_file(sub_domain)
   path = Pathname.new(CONFIG[ENV]['nginx']['conf_dir'])
@@ -100,44 +85,52 @@ def write_config_file(sub_domain)
   File.open(path, mode = 'w') do |f|
     f.write(erb.result(binding))
   end
+
+  Domain.create!(
+      sub_domain: sub_domain,
+      domain: domain,
+      use_auth: secure_domain,
+      conf_path: path
+  )
 end
 
-def delete_config_file(sub_domain)
-  path = Pathname.new(CONFIG[ENV]['nginx']['conf_dir'])
-  path += sub_domain + '.conf'
-
+def delete_config_file(domain)
+  path = Pathname.new(domain.conf_path)
   fail 'config file dose not exist' unless path.exist?
   path.delete
 end
 
-def ssl_cert_request(sub_domain)
+def delete_ssl_certs(domain)
   lets_conf = CONFIG[ENV]['lets']
   return unless lets_conf['enable']
 
-  cmd = lets_conf['cmd']
-  email = lets_conf['email']
-  domain = absolute_domain(sub_domain)
-  webroot_path = lets_conf['webroot_dir'] + domain
+  confdirs = %W(archive/#{domain.domain} live/#{domain.domain} renewal/#{domain.domain}.conf)
+  confdirs.each do |dir|
+    `rm -rf /etc/letsencrypt/#{dir}`
+  end
+end
 
-  `mkdir -p #{webroot_path}`
+def ssl_cert_update
+  lets_conf = CONFIG[ENV]['lets']
+  return unless lets_conf['enable']
+
+  # 登録domainの全一覧を生成する
+  domains = Domain.all
+  domain_list = ''
+  domains.each do |domain|
+    webroot_path = lets_conf['webroot_dir'] + domain.domain
+    `mkdir -p #{webroot_path}`
+    domain_list << "-d #{domain.domain} -w #{webroot_path} "
+  end
+
+  # 発行する
   options = %w(--agree-tos -q --expand --allow-subset-of-names)
-  command = "#{cmd}  #{options.join(' ')} --webroot -w #{webroot_path} -d #{domain} --email #{email}"
+  command = "#{lets_conf['cmd']}  #{options.join(' ')} --webroot --email #{lets_conf['email']} #{domain_list}"
   puts command
   CERT_LOCK.synchronize do
     o, e, s = Open3.capture3(command)
     puts o
     fail "ssl_cert request faild! \n #{e}" unless s.success?
-  end
-end
-
-def delete_ssl_certs(sub_domain)
-  lets_conf = CONFIG[ENV]['lets']
-  return unless lets_conf['enable']
-
-  domain = absolute_domain(sub_domain)
-  confdirs = %W(archive/#{domain} live/#{domain} renewal/#{domain}.conf)
-  confdirs.each do |dir|
-    `rm -rf /etc/letsencrypt/#{dir}`
   end
 end
 
@@ -149,8 +142,8 @@ def reload_nginx
   end
 end
 
-def domain_exist?(sub_domain)
-  DOMAIN_STORE.include? sub_domain
+def get_domain(sub_domain)
+  Domain.find_by(sub_domain: sub_domain)
 end
 
 def absolute_domain(sub_domain)
