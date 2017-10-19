@@ -120,7 +120,8 @@ def ssl_cert_request(sub_domain)
   webroot_path = lets_conf['webroot_dir'] + domain
 
   `mkdir -p #{webroot_path}`
-  command = "#{cmd}  --agree-tos --webroot -w #{webroot_path} -d #{domain} --email #{email}"
+  options = %w(--agree-tos -q --expand --allow-subset-of-names)
+  command = "#{cmd}  #{options.join(' ')} --webroot -w #{webroot_path} -d #{domain} --email #{email}"
   puts command
   CERT_LOCK.synchronize do
     o, e, s = Open3.capture3(command)
