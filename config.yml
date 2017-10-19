@@ -15,16 +15,16 @@ production:
     internal_base: "k8s-nodes.internal.t-lab.cs.teu.ac.jp"
 develop:
   lets:
-    enable: false
+    enable: true
     cmd: "echo"
     email: "moufmofu@shippo.com"
-    webroot_dir: "."
+    webroot_dir: "./"
   nginx:
     ssl: true
-    dummy_ssl : true
+    dummy_ssl : false
     app_log: true
     conf_dir: "."
     reload_cmd: "echo systemctl reload nginx"
   domain:
-    base: ".t-lab.cs.teu.ac.jp"
+    base: "t-lab.cs.teu.ac.jp"
     internal_base: "k8s-nodes.internal.t-lab.cs.teu.ac.jp"
