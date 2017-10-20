@@ -1,9 +1,9 @@
 production:
   lets:
-    enable: false
+    enable: true
     cmd: "certbot certonly"
     email: "tlab-admin@googlegroups.com"
-    webroot_dir: "/var/www/lets/"
+    webroot_dir: "/var/www/lets"
   nginx:
     ssl: true
     dummy_ssl: true

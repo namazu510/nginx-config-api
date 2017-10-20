@@ -104,8 +104,8 @@ def delete_ssl_certs(domain)
   lets_conf = CONFIG[ENV]['lets']
   return unless lets_conf['enable']
 
-  confdirs = %W(archive/#{domain.domain} live/#{domain.domain} renewal/#{domain.domain}.conf)
-  confdirs.each do |dir|
+  conf_dirs = %W(archive/#{domain.domain} live/#{domain.domain} renewal/#{domain.domain}.conf)
+  conf_dirs.each do |dir|
     `rm -rf /etc/letsencrypt/#{dir}`
   end
 end
@@ -118,14 +118,13 @@ def ssl_cert_update
   domains = Domain.all
   domain_list = ''
   domains.each do |domain|
-    webroot_path = lets_conf['webroot_dir'] + domain.domain
-    `mkdir -p #{webroot_path}`
-    domain_list << "-d #{domain.domain} -w #{webroot_path} "
+    domain_list << "-d #{domain.domain}"
   end
 
   # 発行する
-  options = %w(--agree-tos -q --expand --allow-subset-of-names)
-  command = "#{lets_conf['cmd']}  #{options.join(' ')} --webroot --email #{lets_conf['email']} #{domain_list}"
+  options = %w(--agree-tos -q --expand --keep-until-expiring --allow-subset-of-names)
+  command = "#{lets_conf['cmd']}  #{options.join(' ')} --email #{lets_conf['email']} " +
+     "--webroot -w #{lets_conf['webroot_dir']} #{domain_list}"
   puts command
   CERT_LOCK.synchronize do
     o, e, s = Open3.capture3(command)
