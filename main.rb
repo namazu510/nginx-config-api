@@ -50,9 +50,8 @@ end
 # functions
 # ----------
 def add_route(sub_domain)
-  write_config_file(sub_domain)
   ssl_cert_update()
-
+  write_config_file(sub_domain)
   reload_nginx
 end
 
@@ -95,9 +94,7 @@ def write_config_file(sub_domain)
 end
 
 def delete_config_file(domain)
-  path = Pathname.new(domain.conf_path)
-  fail 'config file dose not exist' unless path.exist?
-  path.delete
+  `rm -rf #{domain.conf_path}`
 end
 
 def delete_ssl_certs(domain)
@@ -118,11 +115,11 @@ def ssl_cert_update
   domains = Domain.all
   domain_list = ''
   domains.each do |domain|
-    domain_list << "-d #{domain.domain}"
+    domain_list << " -d #{domain.domain}"
   end
 
   # 発行する
-  options = %w(--agree-tos -q --expand --keep-until-expiring --allow-subset-of-names)
+  options = %w(--agree-tos -q --expand --allow-subset-of-names)
   command = "#{lets_conf['cmd']}  #{options.join(' ')} --email #{lets_conf['email']} " +
      "--webroot -w #{lets_conf['webroot_dir']} #{domain_list}"
   puts command
