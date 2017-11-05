@@ -21,6 +21,9 @@ configure do
   mime_type :text, 'text/plain'
 end
 
+# ----------
+# routes
+# ----------
 get '/' do
   'This is Nginx config generate api.'
 end
@@ -46,6 +49,26 @@ delete '/route/*' do |sub_domain|
   end
 end
 
+get '/log/*' do |sub_domain|
+  domain = get_domain(sub_domain)
+  if domain.nil?
+    status 404
+    json isSuccess: false, message: 'Domain is not registered'
+  else
+    json isSuccess: true, log: get_log("/var/log/nginx/#{sub_domain}/access.log")
+  end
+end
+
+get '/error_log/*' do |sub_domain|
+  domain = get_domain(sub_domain)
+  if domain.nil?
+    status 404
+    json isSuccess: false, message: 'Domain is not registered'
+  else
+    json isSuccess: true, log: get_log("/var/log/nginx/#{sub_domain}/error.log")
+  end
+end
+
 # ----------
 # functions
 # ----------
@@ -62,6 +85,12 @@ def delete_route(domain)
   reload_nginx
 end
 
+def get_log(path)
+  f = File.open(path)
+  log = f.read
+  f.close
+  log
+end
 
 def write_config_file(sub_domain, cert_files)
   path = Pathname.new(CONFIG[ENV]['nginx']['conf_dir'])
