@@ -6,7 +6,7 @@ production:
     webroot_dir: "/var/www/lets"
   nginx:
     ssl: true
-    dummy_ssl: true
+    dummy_ssl: false
     app_log: true
     conf_dir: "/etc/nginx/conf.d/api-reg-hosts"
     reload_cmd: "systemctl reload nginx"
@@ -16,7 +16,7 @@ production:
 develop:
   lets:
     enable: true
-    cmd: "certbot certonly --stageing"
+    cmd: "certbot certonly --staging"
     email: "moufmofu@shippo.com"
     webroot_dir: "/var/www/lets"
   nginx:

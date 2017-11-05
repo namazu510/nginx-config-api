@@ -17,6 +17,8 @@ ActiveRecord::Schema.define(version: 20171019192304) do
     t.string "domain"
     t.boolean "use_auth"
     t.string "conf_path"
+    t.string "lets_live_path"
+    t.string "lets_renew_path"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
