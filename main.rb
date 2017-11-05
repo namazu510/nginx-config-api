@@ -55,7 +55,7 @@ get '/log/*' do |sub_domain|
     status 404
     json isSuccess: false, message: 'Domain is not registered'
   else
-    json isSuccess: true, log: get_log("/var/log/nginx/#{sub_domain}/access.log")
+    json isSuccess: true, log: get_log("/var/log/nginx/#{domain.domain}/access.log")
   end
 end
 
@@ -65,7 +65,7 @@ get '/error_log/*' do |sub_domain|
     status 404
     json isSuccess: false, message: 'Domain is not registered'
   else
-    json isSuccess: true, log: get_log("/var/log/nginx/#{sub_domain}/error.log")
+    json isSuccess: true, log: get_log("/var/log/nginx/#{domain.domain}/error.log")
   end
 end
 
@@ -74,6 +74,7 @@ end
 # ----------
 def add_route(sub_domain)
   cert_files = ssl_cert_update(sub_domain)
+  reset_log(sub_domain)
   write_config_file(sub_domain, cert_files)
   reload_nginx
 end
@@ -83,6 +84,14 @@ def delete_route(domain)
   delete_ssl_certs(domain)
   domain.destroy
   reload_nginx
+end
+
+def reset_log(sub_domain)
+  return unless show_log
+
+  domain = absolute_domain(sub_domain)
+  `mkdir /var/log/nginx/#{domain}`
+  `rm -rf /var/log/nginx/#{domain}/*`
 end
 
 def get_log(path)
@@ -104,10 +113,6 @@ def write_config_file(sub_domain, cert_files)
   use_ssl   = CONFIG[ENV]['nginx']['ssl']
   use_lets  = CONFIG[ENV]['lets']['enable']
   dummy_ssl = CONFIG[ENV]['nginx']['dummy_ssl']
-
-  if show_log
-    `mkdir /var/log/nginx/#{domain}`
-  end
 
   erb = ERB.new(File.read('./config_template.erb'))
   File.open(path, mode = 'w') do |f|
