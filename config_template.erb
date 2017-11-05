@@ -27,9 +27,9 @@ server {
 	<% if use_lets %>
 	# SSL setting
   include "includes/lets.conf";
-	ssl_trusted_certificate /etc/letsencrypt/live/<%= cert_files['live']['path'].to_s %>/fullchain.pem;
-	ssl_certificate         /etc/letsencrypt/live/<%= cert_files['live']['path'].to_s %>/fullchain.pem;
-	ssl_certificate_key     /etc/letsencrypt/live/<%= cert_files['live']['path'].to_s %>/privkey.pem;
+	ssl_trusted_certificate <%= cert_files['live']['path'].to_s %>/fullchain.pem;
+	ssl_certificate         <%= cert_files['live']['path'].to_s %>/fullchain.pem;
+	ssl_certificate_key     <%= cert_files['live']['path'].to_s %>/privkey.pem;
 	<% end %>
 
 	<% if dummy_ssl %>
