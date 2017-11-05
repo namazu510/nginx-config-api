@@ -73,7 +73,7 @@ end
 # functions
 # ----------
 def add_route(sub_domain)
-  cert_files = ssl_cert_update()
+  cert_files = ssl_cert_update(sub_domain)
   write_config_file(sub_domain, cert_files)
   reload_nginx
 end
@@ -119,8 +119,8 @@ def write_config_file(sub_domain, cert_files)
       domain: domain,
       use_auth: secure_domain,
       conf_path: path,
-      lets_live_path: cert_files['live']['path'].to_s,
-      lets_renew_path: cert_files['renew']['path'].to_s,
+      lets_live_path: cert_files[:live][:path].to_s,
+      lets_renew_path: cert_files[:renew][:path].to_s,
   )
 end
 
@@ -137,13 +137,13 @@ def delete_ssl_certs(domain)
   `rm -rf #{domain.lets_renew_path}` unless Domain.where(lets_renew_path: domain.lets_renew_path).size > 1
 end
 
-def ssl_cert_update
+def ssl_cert_update(new_sub_domain)
   lets_conf = CONFIG[ENV]['lets']
   return unless lets_conf['enable']
 
-  # 登録domainの全一覧を生成する
+  # 登録domain + 新しく追加するドメインの一覧を生成する
   domains = Domain.all
-  domain_list = ''
+  domain_list = " -d #{absolute_domain(new_sub_domain)}"
   domains.each do |domain|
     domain_list << " -d #{domain.domain}"
   end
@@ -154,7 +154,7 @@ def ssl_cert_update
      "--webroot -w #{lets_conf['webroot_dir']} #{domain_list}"
   puts command
 
-  files
+  files = {}
   CERT_LOCK.synchronize do
     o, e, s = Open3.capture3(command)
     fail "ssl_cert request faild! \n #{e}" unless s.success?
@@ -162,7 +162,7 @@ def ssl_cert_update
     # 発行されたパスを取得する　=> 最終更新の物が今できた奴
     files = {
       live: get_latest_file('/etc/letsencrypt/live'),
-      renewal: get_latest_file('/etc/letsencrypt/renewal')
+      renew: get_latest_file('/etc/letsencrypt/renewal')
     }
   end
   files
