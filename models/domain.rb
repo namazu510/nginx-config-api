@@ -6,4 +6,6 @@ class Domain < ActiveRecord::Base
   # domain: text
   # use_auth: boolean
   # conf_path: text
+  # lets_live_path :text
+  # lets_renew_path :text
 end

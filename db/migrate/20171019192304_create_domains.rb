@@ -5,6 +5,8 @@ class CreateDomains < ActiveRecord::Migration[5.1]
       t.string :domain
       t.boolean :use_auth
       t.string :conf_path
+      t.string :lets_live_path
+      t.string :lets_renew_path
       t.timestamps
     end
   end
