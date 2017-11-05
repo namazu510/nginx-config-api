@@ -16,14 +16,14 @@ production:
 develop:
   lets:
     enable: true
-    cmd: "echo"
+    cmd: "certbot certonly --stageing"
     email: "moufmofu@shippo.com"
-    webroot_dir: "./"
+    webroot_dir: "/var/www/lets"
   nginx:
     ssl: true
     dummy_ssl : false
     app_log: true
-    conf_dir: "."
+    conf_dir: "/etc/nginx/conf.d/api-reg-hosts"
     reload_cmd: "echo systemctl reload nginx"
   domain:
     base: "t-lab.cs.teu.ac.jp"
