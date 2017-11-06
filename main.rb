@@ -87,7 +87,7 @@ def delete_route(domain)
 end
 
 def reset_log(sub_domain)
-  return unless show_log
+  return unless CONFIG[ENV]['nginx']['app_log']
 
   domain = absolute_domain(sub_domain)
   `mkdir /var/log/nginx/#{domain}`
