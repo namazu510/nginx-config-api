@@ -14,6 +14,8 @@ require './models/domain'
 CONFIG = YAML.load_file('./config.yml')
 ENV = development? ? 'develop' : 'production'
 
+DOMAIN_REQ_LOCK = Mutex.new
+
 CERT_LOCK = Mutex.new
 NGINX_LOCK = Mutex.new
 
@@ -29,23 +31,33 @@ get '/' do
 end
 
 post '/route/*' do |sub_domain|
-  if get_domain(sub_domain)
-    status 400
-    json isSuccess: false, message: 'Invalid domain.'
-  else
-    add_route(sub_domain)
-    json isSucess: true, message: 'Successful request!'
+  DOMAIN_REQ_LOCK.lock
+  begin
+    if get_domain(sub_domain)
+      status 400
+      json isSuccess: false, message: 'Invalid domain.'
+    else
+      add_route(sub_domain)
+      json isSucess: true, message: 'Successful request!'
+    end
+  ensure
+    DOMAIN_REQ_LOCK.unlock
   end
 end
 
 delete '/route/*' do |sub_domain|
-  domain = get_domain(sub_domain)
-  if domain.nil?
-    status 404
-    json isSuccess: false, message: 'Domain is not registered'
-  else
-    delete_route(domain)
-    json isSucess: true, message: 'Successful request!'
+  DOMAIN_REQ_LOCK.lock
+  begin
+    domain = get_domain(sub_domain)
+    if domain.nil?
+      status 404
+      json isSuccess: false, message: 'Domain is not registered'
+    else
+      delete_route(domain)
+      json isSucess: true, message: 'Successful request!'
+    end
+  ensure
+    DOMAIN_REQ_LOCK.unlock
   end
 end
 
