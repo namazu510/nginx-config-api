@@ -2,10 +2,27 @@ require 'timers'
 require 'open3'
 require 'active_record'
 require './models/domain'
+require 'optparse'
+
+opt = OptionParser.new
+
+# Environment
+env_param = 'development'
+opt.on('-e', '--environment', 'environment development or production') do |v|
+  fail "unknown environment #{v}" unless %w(development production).in?(v)
+  puts "Start as #{v}"
+  env_param = v
+end
+ENV = env_param
+
+# 証明書発行リクエスト実行間隔
+cert_interval = 60 * 60 * 12
+opt.on('--cert_req_interval', 'cert job interval (sec) default 60*60*12') do |v|
+  cert_interval = v
+end
+opt.parse(ARGV)
 
 CONFIG = YAML.load_file('./config.yml')
-ENV = 'production'
-cert_interval = 60 * 60 * 12 # 証明書発行リクエスト実行間隔
 
 timers = Timers::Group.new
 timers.every(cert_interval) do
