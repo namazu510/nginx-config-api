@@ -7,7 +7,7 @@ server {
   server_name	<%= domain %>;
 
 	# access log
-	<% if show_log %>
+	<% if CONFIG[ENV]['nginx']['app_log'] %>
 	access_log /var/log/nginx/<%= domain %>/access.log;
 	error_log  /var/log/nginx/<%= domain %>/error.log;
 	<% else %>
@@ -15,12 +15,7 @@ server {
 	error_log off;
 	<% end %>
 
-	<% if secure_domain %>
-	# Auth setting
-	include "includes/internal.conf";
-	<% end %>
-
-	<% unless use_ssl %>
+	<% unless CONFIG[ENV]['nginx']['ssl'] %>
 	listen 80;
 	<% end %>
 
@@ -43,6 +38,6 @@ server {
 	include "includes/header.conf";
 	# Reverse Proxy
 	location / {
-  	proxy_pass http://<%= internal_domain %>;
+  	proxy_pass http://<%= CONFIG[ENV]['domain']['internal_base'] %>;
 	}
 }
