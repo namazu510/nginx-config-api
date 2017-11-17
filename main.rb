@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require 'sinatra'
 require 'sinatra/reloader' if development?
 require 'sinatra/json'
@@ -12,7 +13,7 @@ require 'active_record'
 require './models/domain'
 
 CONFIG = YAML.load_file('./config.yml')
-ENV = development? ? 'develop' : 'production'
+ENV = development? ? 'development' : 'production'
 
 DOMAIN_REQ_LOCK = Mutex.new
 NGINX_LOCK = Mutex.new

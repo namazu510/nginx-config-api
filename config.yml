@@ -13,7 +13,7 @@ production:
   domain:
     base: "t-lab.cs.teu.ac.jp"
     internal_base: "k8s-nodes.internal.t-lab.cs.teu.ac.jp"
-develop:
+development:
   lets:
     enable: true
     cmd: "certbot certonly --staging"

@@ -1,0 +1,89 @@
+Don't run Bundler as root. Bundler can ask for sudo if it is needed, and
+installing your bundle as root will break this application for all non-root
+users on this machine.
+Using rake 12.1.0
+Using concurrent-ruby 1.0.5
+Using minitest 5.10.3
+Using thread_safe 0.3.6
+Using arel 8.0.0
+Using backports 3.10.3
+Using bundler 1.15.4
+Using multi_json 1.12.2
+Using mustermann 1.0.1
+Using rack 2.0.3
+Using tilt 2.0.8
+Using sqlite3 1.3.13
+Using i18n 0.9.0
+Using tzinfo 1.2.3
+Using rack-protection 2.0.0
+Using activesupport 5.1.4
+Using sinatra 2.0.0
+Using activemodel 5.1.4
+Using sinatra-contrib 2.0.0
+Using activerecord 5.1.4
+Using sinatra-activerecord 2.0.13
+Bundle complete! 6 Gemfile dependencies, 21 gems now installed.
+Bundled gems are installed into ./vendor/bundler.
+main.rb:15: warning: already initialized constant ENV
+[2017-11-06 07:50:39] INFO  WEBrick 1.3.1
+[2017-11-06 07:50:39] INFO  ruby 2.4.1 (2017-03-22) [x86_64-linux]
+== Sinatra (v2.0.0) has taken the stage on 4567 for production with backup from WEBrick
+[2017-11-06 07:50:39] INFO  WEBrick::HTTPServer#start: pid=17251 port=4567
+192.168.189.21 - - [06/Nov/2017:08:11:16 +0900] "DELETE /route/prop.namazu510.ks HTTP/1.1" 404 56 0.0282
+127.0.0.1 - - [06/Nov/2017:08:11:16 JST] "DELETE /route/prop.namazu510.ks HTTP/1.0" 404 56
+- -> /route/prop.namazu510.ks
+192.168.189.21 - - [06/Nov/2017:08:11:30 +0900] "DELETE /route/wordpress.portal.ks HTTP/1.1" 404 56 0.0024
+127.0.0.1 - - [06/Nov/2017:08:11:30 JST] "DELETE /route/wordpress.portal.ks HTTP/1.0" 404 56
+- -> /route/wordpress.portal.ks
+certbot certonly  --agree-tos -q --expand --allow-subset-of-names --email tlab-admin@googlegroups.com --webroot -w /var/www/lets  -d wordpress.portal.k.t-lab.cs.teu.ac.jp
+2017-11-06 08:13:14 - NameError - undefined local variable or method `show_log' for #<Sinatra::Application:0x007f59301a14a0>:
+	main.rb:90:in `reset_log'
+	main.rb:77:in `add_route'
+	main.rb:36:in `block in <main>'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1631:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1631:in `block in compile!'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:991:in `block (3 levels) in route!'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1010:in `route_eval'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:991:in `block (2 levels) in route!'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1037:in `block in process_route'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1035:in `catch'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1035:in `process_route'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:989:in `block in route!'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:988:in `each'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:988:in `route!'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1094:in `block in dispatch!'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1073:in `block in invoke'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1073:in `catch'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1073:in `invoke'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1091:in `dispatch!'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:923:in `block in call!'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1073:in `block in invoke'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1073:in `catch'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1073:in `invoke'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:923:in `call!'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:913:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-protection-2.0.0/lib/rack/protection/xss_header.rb:18:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-protection-2.0.0/lib/rack/protection/path_traversal.rb:16:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-protection-2.0.0/lib/rack/protection/json_csrf.rb:26:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-protection-2.0.0/lib/rack/protection/base.rb:50:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-protection-2.0.0/lib/rack/protection/base.rb:50:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-protection-2.0.0/lib/rack/protection/frame_options.rb:31:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-2.0.3/lib/rack/logger.rb:15:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-2.0.3/lib/rack/common_logger.rb:33:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:231:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:224:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-2.0.3/lib/rack/head.rb:12:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-2.0.3/lib/rack/method_override.rb:22:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:194:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1955:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1499:in `block in call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1726:in `synchronize'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/sinatra-2.0.0/lib/sinatra/base.rb:1499:in `call'
+	/root/nginx-config-api/vendor/bundler/ruby/2.4.0/gems/rack-2.0.3/lib/rack/handler/webrick.rb:86:in `service'
+	/root/.rbenv/versions/2.4.1/lib/ruby/2.4.0/webrick/httpserver.rb:140:in `service'
+	/root/.rbenv/versions/2.4.1/lib/ruby/2.4.0/webrick/httpserver.rb:96:in `run'
+	/root/.rbenv/versions/2.4.1/lib/ruby/2.4.0/webrick/server.rb:290:in `block in start_thread'
+192.168.189.21 - - [06/Nov/2017:08:13:14 +0900] "POST /route/wordpress.portal.k HTTP/1.1" 500 30 6.2256
+127.0.0.1 - - [06/Nov/2017:08:13:08 JST] "POST /route/wordpress.portal.k HTTP/1.0" 500 30
+- -> /route/wordpress.portal.k
+./start.sh: 5 行: 17251 強制終了            bundle exec ruby main.rb -e production -o 0.0.0.0

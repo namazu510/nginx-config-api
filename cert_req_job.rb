@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 require 'timers'
 require 'open3'
 require 'active_record'
 require './models/domain'
 require 'optparse'
+require 'erb'
 
 opt = OptionParser.new
 # Environment
@@ -17,7 +19,7 @@ ENV = env_param
 # 証明書発行リクエスト実行間隔
 cert_interval = 60 * 60 * 12
 opt.on('--cert_req_interval interval_time', 'cert job interval (sec) default 60*60*12') do |v|
-  cert_interval = v
+  cert_interval = v.to_i
 end
 opt.parse(ARGV)
 
@@ -59,14 +61,14 @@ timers.every(cert_interval) do
     domain.cert_req = false
     domain.lets_live_path = files[:live][:path].to_s
     domain.lets_renew_path = files[:renew][:path].to_s
-    domain.update!
+    domain.save!
   end
 
   # Nginxのコンフィグをオレオレから置き換える
   domains.each do |domain|
     use_lets = true
     dummy_ssl = false
-
+    cert_files = files    
     erb = ERB.new(File.read('./config_template.erb'))
     File.open(domain.conf_path, mode = 'w') do |f|
       domain = domain.domain
