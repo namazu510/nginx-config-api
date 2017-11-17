@@ -15,8 +15,6 @@ CONFIG = YAML.load_file('./config.yml')
 ENV = development? ? 'develop' : 'production'
 
 DOMAIN_REQ_LOCK = Mutex.new
-
-CERT_LOCK = Mutex.new
 NGINX_LOCK = Mutex.new
 
 configure do
@@ -85,9 +83,8 @@ end
 # functions
 # ----------
 def add_route(sub_domain)
-  cert_files = ssl_cert_update(sub_domain)
   reset_log(sub_domain)
-  write_config_file(sub_domain, cert_files)
+  write_config_file(sub_domain)
   reload_nginx
 end
 
@@ -113,18 +110,16 @@ def get_log(path)
   log
 end
 
-def write_config_file(sub_domain, cert_files)
+def write_config_file(sub_domain)
   path = Pathname.new(CONFIG[ENV]['nginx']['conf_dir'])
   path += sub_domain + '.conf'
 
   domain = absolute_domain(sub_domain)
-  internal_domain = CONFIG[ENV]['domain']['internal_base']
   secure_domain = sub_domain.end_with? 'ks'
 
-  show_log  = CONFIG[ENV]['nginx']['app_log']
-  use_ssl   = CONFIG[ENV]['nginx']['ssl']
-  use_lets  = CONFIG[ENV]['lets']['enable']
-  dummy_ssl = CONFIG[ENV]['nginx']['dummy_ssl']
+  # 最初の書き出しのときはオレオレ証明を使う
+  use_lets  = false
+  dummy_ssl = true
 
   erb = ERB.new(File.read('./config_template.erb'))
   File.open(path, mode = 'w') do |f|
@@ -132,12 +127,11 @@ def write_config_file(sub_domain, cert_files)
   end
 
   Domain.create!(
-      sub_domain: sub_domain,
-      domain: domain,
-      use_auth: secure_domain,
-      conf_path: path,
-      lets_live_path: cert_files[:live][:path].to_s,
-      lets_renew_path: cert_files[:renew][:path].to_s,
+    sub_domain: sub_domain,
+    domain: domain,
+    use_auth: secure_domain,
+    conf_path: path,
+    cert_req: true
   )
 end
 
@@ -154,46 +148,6 @@ def delete_ssl_certs(domain)
   `rm -rf #{domain.lets_renew_path}` unless Domain.where(lets_renew_path: domain.lets_renew_path).size > 1
 end
 
-def ssl_cert_update(new_sub_domain)
-  lets_conf = CONFIG[ENV]['lets']
-  return unless lets_conf['enable']
-
-  # 登録domain + 新しく追加するドメインの一覧を生成する
-  domains = Domain.all
-  domain_list = " -d #{absolute_domain(new_sub_domain)}"
-  domains.each do |domain|
-    domain_list << " -d #{domain.domain}"
-  end
-
-  # 発行する
-  options = %w(--agree-tos -q --expand --allow-subset-of-names)
-  command = "#{lets_conf['cmd']}  #{options.join(' ')} --email #{lets_conf['email']} " +
-     "--webroot -w #{lets_conf['webroot_dir']} #{domain_list}"
-  puts command
-
-  files = {}
-  CERT_LOCK.synchronize do
-    o, e, s = Open3.capture3(command)
-    fail "ssl_cert request faild! \n #{e}" unless s.success?
-
-    # 発行されたパスを取得する　=> 最終更新の物が今できた奴
-    files = {
-      live: get_latest_file('/etc/letsencrypt/live'),
-      renew: get_latest_file('/etc/letsencrypt/renewal')
-    }
-  end
-  files
-end
-
-def get_latest_file(path)
-  Pathname.new(path).children.map do |child_path|
-    {
-      path: child_path,
-      last_modify: File.stat(child_path).mtime
-    }
-  end.sort_by! { |file| file['last_modify'] }.last
-end
-
 def reload_nginx
   cmd = CONFIG[ENV]['nginx']['reload_cmd']
   NGINX_LOCK.synchronize do
@@ -208,5 +162,5 @@ end
 
 def absolute_domain(sub_domain)
   base = CONFIG[ENV]['domain']['base']
-  sub_domain  + '.' + base
+  sub_domain + '.' + base
 end
