@@ -38,6 +38,12 @@ server {
 	include "includes/header.conf";
 	# Reverse Proxy
 	location / {
+    # auth_tktがパラメータで渡ってくる場合の対処
+    if ($arg_auth_tkt) {
+      add_header Set-Cookie "auth_tkt=$arg_auth_tkt; domain=.service.cloud.teu.ac.jp; max-age=360000; Secure";
+      # クエリを取り除いてリダイレクトを発行する
+      return 301 $scheme://$host$uri;
+    }
   	proxy_pass http://<%= CONFIG[ENV]['domain']['internal_base'] %>;
 	}
 }
