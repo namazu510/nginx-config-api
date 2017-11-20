@@ -7,26 +7,27 @@ require 'optparse'
 require 'erb'
 
 opt = OptionParser.new
+options = {
+  env: 'development',
+  cert_interval: 10
+}
 # Environment
-env_param = 'development'
 opt.on('-e', '--environment env', 'environment development or production') do |v|
   fail "unknown environment #{v}" unless %w(development production).include?(v)
   puts "Start as #{v}"
-  env_param = v
+  options[:env] = v
 end
-ENV = env_param
 
 # 証明書発行リクエスト実行間隔
-cert_interval = 60 * 60 * 12
-opt.on('--cert_req_interval interval_time', 'cert job interval (sec) default 60*60*12') do |v|
-  cert_interval = v.to_i
+opt.on('--cert_req_interval interval_time', 'cert job interval (sec) default 10') do |v|
+  options[:cert_interval] = v.to_i
 end
 opt.parse(ARGV)
-
+ENV = options[:env]
 CONFIG = YAML.load_file('./config.yml')
 
 timers = Timers::Group.new
-timers.every(cert_interval) do
+timers.every(options[:cert_interval]) do
   puts "#{Time.now} cert request job start"
   cert_req_domains = Domain.where(cert_req: true)
   if cert_req_domains.blank?
@@ -68,7 +69,7 @@ timers.every(cert_interval) do
   domains.each do |domain|
     use_lets = true
     dummy_ssl = false
-    cert_files = files    
+    cert_files = files
     erb = ERB.new(File.read('./config_template.erb'))
     File.open(domain.conf_path, mode = 'w') do |f|
       domain = domain.domain
