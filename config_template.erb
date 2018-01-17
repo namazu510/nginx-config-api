@@ -4,12 +4,12 @@
 # ---------------------------------------------------
 server {
 	# basic setting
-  server_name	<%= domain %>;
+  server_name	<%= domain.domain %>;
 
 	# access log
 	<% if CONFIG[ENV]['nginx']['app_log'] %>
-	access_log /var/log/nginx/<%= domain %>/access.log;
-	error_log  /var/log/nginx/<%= domain %>/error.log;
+	access_log /var/log/nginx/<%= domain.domain %>/access.log;
+	error_log  /var/log/nginx/<%= domain.domain %>/error.log;
 	<% else %>
 	access_log off;
 	error_log off;
@@ -35,15 +35,24 @@ server {
 	ssl_certificate_key /etc/pki/tls/private/server.key;
 	<% end %>
 
+	<% if use_auth %>
+	# Auth setting
+	auth_request <%= auth_uri.path %>;
+	location <%= auth_uri.path %> {
+		internal;
+		proxy_pass <%= auth_uri.to_s %>;
+	}
+	<% end %>
+
 	include "includes/header.conf";
 	# Reverse Proxy
 	location / {
     # auth_tktがパラメータで渡ってくる場合の対処
     if ($arg_auth_tkt) {
-      add_header Set-Cookie "auth_tkt=$arg_auth_tkt; domain=.service.cloud.teu.ac.jp; max-age=360000; Secure";
+      add_header Set-Cookie "auth_tkt=$arg_auth_tkt; domain=<%= domain.domain %>; max-age=360000; Secure";
       # クエリを取り除いてリダイレクトを発行する
-      return 301 $scheme://$host$uri;
+      return 302 $scheme://$host$uri;
     }
-  	proxy_pass http://<%= CONFIG[ENV]['domain']['internal_base'] %>;
+  	proxy_pass <%= domain.proxy_pass %>;
 	}
 }

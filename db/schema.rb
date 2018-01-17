@@ -10,18 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171115174000) do
+ActiveRecord::Schema.define(version: 20171019192304) do
 
   create_table "domains", force: :cascade do |t|
     t.string "sub_domain"
     t.string "domain"
+    t.string "proxy_pass"
     t.boolean "use_auth"
+    t.string "auth_url"
+    t.boolean "cert_req"
     t.string "conf_path"
     t.string "lets_live_path"
     t.string "lets_renew_path"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "cert_req"
   end
 
 end

@@ -10,9 +10,6 @@ production:
     app_log: true
     conf_dir: "/etc/nginx/conf.d/api-reg-hosts"
     reload_cmd: "systemctl reload nginx"
-  domain:
-    base: "service.cloud.teu.ac.jp"
-    internal_base: "kube-nodes.gallery.local"
 development:
   lets:
     enable: true
@@ -25,6 +22,3 @@ development:
     app_log: true
     conf_dir: "/etc/nginx/conf.d/api-reg-hosts"
     reload_cmd: "echo systemctl reload nginx"
-  domain:
-    base: "t-lab.cs.teu.ac.jp"
-    internal_base: "k8s-nodes.internal.t-lab.cs.teu.ac.jp"

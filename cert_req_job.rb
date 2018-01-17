@@ -2,6 +2,7 @@
 require 'timers'
 require 'open3'
 require 'active_record'
+require 'uri'
 require './models/domain'
 require 'optparse'
 require 'erb'
@@ -72,7 +73,7 @@ timers.every(options[:cert_interval]) do
     cert_files = files
     erb = ERB.new(File.read('./config_template.erb'))
     File.open(domain.conf_path, mode = 'w') do |f|
-      domain = domain.domain
+      auth_uri = URI.parse(domain.auth_url)
       f.write(erb.result(binding))
     end
   end

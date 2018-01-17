@@ -7,6 +7,7 @@ require 'pathname'
 require 'erb'
 require 'logger'
 require 'open3'
+require 'uri'
 require 'thread'
 require 'active_record'
 
@@ -29,14 +30,15 @@ get '/' do
   'This is Nginx config generate api.'
 end
 
-post '/route/*' do |sub_domain|
+post '/route', provides: :json do
+  params = JSON.parse request.body.read
   DOMAIN_REQ_LOCK.lock
   begin
-    if get_domain(sub_domain)
+    if Domain.find_by(domain: params[:domain])
       status 400
       json isSuccess: false, message: 'Invalid domain.'
     else
-      add_route(sub_domain)
+      add_route(params)
       json isSucess: true, message: 'Successful request!'
     end
   ensure
@@ -44,10 +46,10 @@ post '/route/*' do |sub_domain|
   end
 end
 
-delete '/route/*' do |sub_domain|
+delete '/route/*' do |d|
   DOMAIN_REQ_LOCK.lock
   begin
-    domain = get_domain(sub_domain)
+    domain = Domain.find_by(domain: d)
     if domain.nil?
       status 404
       json isSuccess: false, message: 'Domain is not registered'
@@ -60,8 +62,8 @@ delete '/route/*' do |sub_domain|
   end
 end
 
-get '/log/*' do |sub_domain|
-  domain = get_domain(sub_domain)
+get '/log/*' do |d|
+  domain = Domain.find_by(domain: d)
   if domain.nil?
     status 404
     json isSuccess: false, message: 'Domain is not registered'
@@ -70,8 +72,8 @@ get '/log/*' do |sub_domain|
   end
 end
 
-get '/error_log/*' do |sub_domain|
-  domain = get_domain(sub_domain)
+get '/error_log/*' do |d|
+  domain = Domain.find_by(domain: d)
   if domain.nil?
     status 404
     json isSuccess: false, message: 'Domain is not registered'
@@ -83,9 +85,9 @@ end
 # ----------
 # functions
 # ----------
-def add_route(sub_domain)
-  reset_log(sub_domain)
-  write_config_file(sub_domain)
+def add_route(params)
+  reset_log(params[:domain])
+  write_config_file(params)
   reload_nginx
 end
 
@@ -96,10 +98,9 @@ def delete_route(domain)
   reload_nginx
 end
 
-def reset_log(sub_domain)
+def reset_log(domain)
   return unless CONFIG[ENV]['nginx']['app_log']
 
-  domain = absolute_domain(sub_domain)
   `mkdir /var/log/nginx/#{domain}`
   `rm -rf /var/log/nginx/#{domain}/*`
 end
@@ -111,12 +112,20 @@ def get_log(path)
   log
 end
 
-def write_config_file(sub_domain)
+def write_config_file(params)
   path = Pathname.new(CONFIG[ENV]['nginx']['conf_dir'])
-  path += sub_domain + '.conf'
+  path += params[:domain] + '.conf'
 
-  domain = absolute_domain(sub_domain)
-  secure_domain = sub_domain.end_with? 'ks'
+  auth_uri = URI.parse(params[:auth_url]).normalize
+
+  domain = Domain.new(
+    domain: params[:domain],
+    use_auth: params[:auth_url].empty?,
+    proxy_pass: params[:proxy_pass]
+    auth_url: auth_uri
+    conf_path: path,
+    cert_req: true
+  )
 
   # 最初の書き出しのときはオレオレ証明を使う
   use_lets  = false
@@ -126,14 +135,7 @@ def write_config_file(sub_domain)
   File.open(path, mode = 'w') do |f|
     f.write(erb.result(binding))
   end
-
-  Domain.create!(
-    sub_domain: sub_domain,
-    domain: domain,
-    use_auth: secure_domain,
-    conf_path: path,
-    cert_req: true
-  )
+  domain.save!
 end
 
 def delete_config_file(domain)
@@ -155,13 +157,4 @@ def reload_nginx
     o, e, s = Open3.capture3(cmd)
     fail "nginx reload faild!" unless s.success?
   end
-end
-
-def get_domain(sub_domain)
-  Domain.find_by(sub_domain: sub_domain)
-end
-
-def absolute_domain(sub_domain)
-  base = CONFIG[ENV]['domain']['base']
-  sub_domain + '.' + base
 end
