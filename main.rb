@@ -32,9 +32,10 @@ end
 
 post '/route', provides: :json do
   params = JSON.parse request.body.read
+  p params
   DOMAIN_REQ_LOCK.lock
   begin
-    if Domain.find_by(domain: params[:domain])
+    if Domain.find_by(domain: params['domain'])
       status 400
       json isSuccess: false, message: 'Invalid domain.'
     else
@@ -86,7 +87,7 @@ end
 # functions
 # ----------
 def add_route(params)
-  reset_log(params[:domain])
+  reset_log(params['domain'])
   write_config_file(params)
   reload_nginx
 end
@@ -114,15 +115,15 @@ end
 
 def write_config_file(params)
   path = Pathname.new(CONFIG[ENV]['nginx']['conf_dir'])
-  path += params[:domain] + '.conf'
+  path += params['domain'] + '.conf'
 
-  auth_uri = URI.parse(params[:auth_url]).normalize
+  auth_uri = URI.parse(params['auth_url']).normalize unless params['auth_url'].nil?
 
   domain = Domain.new(
-    domain: params[:domain],
-    use_auth: params[:auth_url].empty?,
-    proxy_pass: params[:proxy_pass]
-    auth_url: auth_uri
+    domain: params['domain'],
+    use_auth: !(params['auth_url'].nil? || params['auth_url'].empty?),
+    proxy_pass: params['proxy_pass'],
+    auth_url: auth_uri,
     conf_path: path,
     cert_req: true
   )

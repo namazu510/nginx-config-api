@@ -35,7 +35,7 @@ server {
 	ssl_certificate_key /etc/pki/tls/private/server.key;
 	<% end %>
 
-	<% if use_auth %>
+	<% if domain.use_auth %>
 	# Auth setting
 	auth_request <%= auth_uri.path %>;
 	location <%= auth_uri.path %> {
