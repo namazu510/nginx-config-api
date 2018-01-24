@@ -20,5 +20,5 @@ development:
     ssl: true
     dummy_ssl : false
     app_log: true
-    conf_dir: "/etc/nginx/conf.d/api-reg-hosts"
+    conf_dir: "./tmp"
     reload_cmd: "echo systemctl reload nginx"

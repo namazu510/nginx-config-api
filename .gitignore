@@ -3,4 +3,5 @@
 .idea
 .bundle
 .vagrant
+/tmp
 *.sqlite3
