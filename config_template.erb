@@ -3,50 +3,62 @@
 # https://github.com/uutarou10/nginx-config-api
 # ---------------------------------------------------
 server {
-	# basic setting
+  # basic setting
   server_name	<%= domain.domain %>;
 
-	# access log
-	<% if CONFIG[ENV]['nginx']['app_log'] %>
-	access_log /var/log/nginx/<%= domain.domain %>/access.log;
-	error_log  /var/log/nginx/<%= domain.domain %>/error.log;
-	<% else %>
-	access_log off;
-	error_log off;
-	<% end %>
+  # access log
+  <% if CONFIG[ENV]['nginx']['app_log'] %>
+  access_log /var/log/nginx/<%= domain.domain %>/access.log;
+  error_log  /var/log/nginx/<%= domain.domain %>/error.log;
+  <% else %>
+  access_log off;
+  error_log off;
+  <% end %>
 
-	<% unless CONFIG[ENV]['nginx']['ssl'] %>
-	listen 80;
-	<% end %>
+  <% unless CONFIG[ENV]['nginx']['ssl'] %>
+  listen 80;
+  <% end %>
 
-	<% if use_lets %>
-	# SSL setting
+  <% if use_lets %>
+  # SSL setting
   include "includes/lets.conf";
-	ssl_trusted_certificate <%= cert_files[:live][:path].to_s %>/fullchain.pem;
-	ssl_certificate         <%= cert_files[:live][:path].to_s %>/fullchain.pem;
-	ssl_certificate_key     <%= cert_files[:live][:path].to_s %>/privkey.pem;
-	<% end %>
+  ssl_trusted_certificate <%= cert_files[:live][:path].to_s %>/fullchain.pem;
+  ssl_certificate         <%= cert_files[:live][:path].to_s %>/fullchain.pem;
+  ssl_certificate_key     <%= cert_files[:live][:path].to_s %>/privkey.pem;
+  <% end %>
 
-	<% if dummy_ssl %>
-	# SSL setting
-	listen 443;
-	ssl on;
-	ssl_certificate     /etc/pki/tls/certs/server.crt;
-	ssl_certificate_key /etc/pki/tls/private/server.key;
-	<% end %>
+  <% if dummy_ssl %>
+  # SSL setting
+  listen 443;
+  ssl on;
+  ssl_certificate     /etc/pki/tls/certs/server.crt;
+  ssl_certificate_key /etc/pki/tls/private/server.key;
+  <% end %>
 
-	<% if domain.use_auth %>
-	# Auth setting
-	auth_request <%= auth_uri.path %>;
-	location <%= auth_uri.path %> {
-		internal;
-		proxy_pass <%= auth_uri.to_s %>;
-	}
-	<% end %>
+  <% if domain.use_auth %>
+  # Auth setting
+  auth_request <%= auth_uri.path %>;
+  auth_request_set $x_auth_url $upstream_http_x_auth_url;
+  error_page 401 = @auth_redirect;
 
-	include "includes/header.conf";
-	# Reverse Proxy
-	location / {
+  location <%= auth_uri.path %> {
+    internal;
+
+    proxy_set_header X-Request-Url $schema://$host$request_uri;
+    proxy_request_body off;
+    # なぜauth_tktが適当な値で付与されるかについてはGalleryPortalのcsc-authエンドポイント参照
+    proxy_pass <%= auth_uri.to_s %>?auth_tkt=mofumofu;
+  }
+
+  location @auth_redirect {
+    internal;
+    return 302 $x_auth_url;
+  }
+  <% end %>
+
+  include "includes/header.conf";
+  # Reverse Proxy
+  location / {
     # auth_tktがパラメータで渡ってくる場合の対処
     if ($arg_auth_tkt) {
       add_header Set-Cookie "auth_tkt=$arg_auth_tkt; domain=<%= domain.domain %>; max-age=360000; Secure";
@@ -54,5 +66,5 @@ server {
       return 302 $scheme://$host$uri;
     }
   	proxy_pass <%= domain.proxy_pass %>;
-	}
+  }
 }
