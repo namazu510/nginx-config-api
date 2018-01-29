@@ -44,7 +44,8 @@ server {
       # クエリを取り除いてリダイレクトを発行する
       return 302 $scheme://$host$uri;
     }
-    proxy_pass <%= domain.proxy_pass %>:10080;
+    proxy_set_header Host $host;
+    proxy_pass http://localhost:10080;
   }
 }
 
