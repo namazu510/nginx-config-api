@@ -3,6 +3,11 @@
 # https://github.com/namazu510/nginx-config-api
 # ---------------------------------------------------
 server {
+  server_name <%= domain.domain %>;
+  include "includes/lets-http.conf";
+}
+
+server {
   # basic setting
   server_name	<%= domain.domain %>;
 
@@ -35,7 +40,6 @@ server {
   ssl_certificate_key /etc/pki/tls/private/server.key;
   <% end %>
 
-  include "includes/header.conf";
   # Reverse Proxy
   location / {
     # auth_tktがパラメータで渡ってくる場合の対処
@@ -45,7 +49,15 @@ server {
       return 302 $scheme://$host$uri;
     }
     proxy_set_header Host $host;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Server $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
     proxy_pass http://localhost:10080;
+    proxy_redirect http:// https://;
   }
 }
 
@@ -65,7 +77,7 @@ server {
     internal;
 
     proxy_set_header X-Request-Url $scheme://$host$request_uri;
-    proxy_request_body off;
+    proxy_pass_request_body off;
     proxy_pass <%= auth_uri.to_s %>;
   }
 
@@ -75,9 +87,14 @@ server {
   }
   <% end %>
 
-  include "includes/header.conf";
   # Reverse Proxy
   location / {
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Server $host;
+
   	proxy_pass <%= domain.proxy_pass %>;
   }
 }
