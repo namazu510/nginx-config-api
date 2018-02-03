@@ -73,7 +73,7 @@ timers.every(options[:cert_interval]) do
     cert_files = files
     erb = ERB.new(File.read('./config_template.erb'))
     File.open(domain.conf_path, mode = 'w') do |f|
-      auth_uri = URI.parse(domain.auth_url)
+      auth_uri = URI.parse(domain.auth_url) if domain.use_auth
       f.write(erb.result(binding))
     end
   end

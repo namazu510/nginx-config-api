@@ -35,13 +35,8 @@ post '/route', provides: :json do
   p params
   DOMAIN_REQ_LOCK.lock
   begin
-    if Domain.find_by(domain: params['domain'])
-      status 400
-      json isSuccess: false, message: 'Invalid domain.'
-    else
-      add_route(params)
-      json isSucess: true, message: 'Successful request!'
-    end
+    add_route(params)
+    json isSucess: true, message: 'Successful request!'
   ensure
     DOMAIN_REQ_LOCK.unlock
   end
