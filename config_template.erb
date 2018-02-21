@@ -12,7 +12,7 @@ server {
   server_name	<%= domain.domain %>;
 
   # access log
-  <% if CONFIG[ENV]['nginx']['app_log'] %>
+  <% if CONFIG.nginx.app_log %>
   access_log /var/log/nginx/<%= domain.domain %>/access.log;
   error_log  /var/log/nginx/<%= domain.domain %>/error.log;
   <% else %>
@@ -20,7 +20,7 @@ server {
   error_log off;
   <% end %>
 
-  <% unless CONFIG[ENV]['nginx']['ssl'] %>
+  <% unless CONFIG.nginx.ssl %>
   listen 80;
   <% end %>
 
@@ -40,38 +40,8 @@ server {
   ssl_certificate_key /etc/pki/tls/private/server.key;
   <% end %>
 
-  # Reverse Proxy
-  location / {
-    # auth_tktがパラメータで渡ってくる場合の対処
-    if ($arg_auth_tkt) {
-      add_header Set-Cookie "auth_tkt=$arg_auth_tkt; domain=<%= domain.domain %>; max-age=360000; Secure";
-      # クエリを取り除いてリダイレクトを発行する
-      return 302 $scheme://$host$uri;
-    }
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Forwarded-Server $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
-    proxy_pass http://localhost:10080;
-    proxy_redirect http:// https://;
-  }
-}
-
-# 2段構成
-# http://namazu-tech.hatenablog.com/entry/2018/01/25/232629
-server {
-  server_name	<%= domain.domain %>;
-  listen 10080;
-
   <% if domain.use_auth %>
   # Auth setting
-  auth_request <%= auth_uri.path %>;
-  auth_request_set $x_auth_url $upstream_http_x_auth_url;
-  error_page 401 = @auth_redirect;
-
   location <%= auth_uri.path %> {
     internal;
 
@@ -84,16 +54,35 @@ server {
     internal;
     return 302 $x_auth_url;
   }
-  <% end %>
 
-  # Reverse Proxy
-  location / {
+  location /auth/gallery-token-login {
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-Proto https;
     proxy_set_header X-Forwarded-Host $host;
     proxy_set_header X-Forwarded-Server $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
-  	proxy_pass <%= domain.proxy_pass %>;
+    proxy_pass http://gallery-portal.gallery.local;
+  }
+  <% end %>
+
+  # Reverse Proxy
+  location / {
+    <% if domain.use_auth %>
+    # Auth request
+    auth_request <%= auth_uri.path %>;
+    auth_request_set $x_auth_url $upstream_http_x_auth_url;
+    error_page 401 = @auth_redirect;
+    <% end %>
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Server $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+    proxy_pass <%= domain.proxy_pass %>;
   }
 }

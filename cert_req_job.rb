@@ -3,9 +3,11 @@ require 'timers'
 require 'open3'
 require 'active_record'
 require 'uri'
-require './models/domain'
 require 'optparse'
 require 'erb'
+require './config'
+require './models/domain'
+
 
 opt = OptionParser.new
 options = {
@@ -24,8 +26,7 @@ opt.on('--cert_req_interval interval_time', 'cert job interval (sec) default 10'
   options[:cert_interval] = v.to_i
 end
 opt.parse(ARGV)
-ENV = options[:env]
-CONFIG = YAML.load_file('./config.yml')
+CONFIG = Config.new(options[:env])
 
 timers = Timers::Group.new
 timers.every(options[:cert_interval]) do
@@ -45,7 +46,7 @@ timers.every(options[:cert_interval]) do
 
   # 発行する
   options = %w(--agree-tos -q --expand --allow-subset-of-names)
-  lets_conf = CONFIG[ENV]['lets']
+  lets_conf = CONFIG.lets
   command = "#{lets_conf['cmd']}  #{options.join(' ')} --email #{lets_conf['email']} " +
     "--webroot -w #{lets_conf['webroot_dir']} #{domain_list}"
   puts command
@@ -79,7 +80,7 @@ timers.every(options[:cert_interval]) do
   end
 
   # Nginxをリロードする
-  cmd = CONFIG[ENV]['nginx']['reload_cmd']
+  cmd = CONFIG.nginx.reload_cmd
   o, e, s = Open3.capture3(cmd)
   fail "nginx reload faild!" unless s.success?
 

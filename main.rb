@@ -11,10 +11,10 @@ require 'uri'
 require 'thread'
 require 'active_record'
 
+require './config'
 require './models/domain'
 
-CONFIG = YAML.load_file('./config.yml')
-ENV = development? ? 'development' : 'production'
+CONFIG = Config.new(development? ? 'development' : 'production')
 
 DOMAIN_REQ_LOCK = Mutex.new
 NGINX_LOCK = Mutex.new
@@ -58,13 +58,13 @@ delete '/route/*' do |d|
   end
 end
 
-get '/log/*' do |d|
+get '/access_log/*' do |d|
   domain = Domain.find_by(domain: d)
   if domain.nil?
     status 404
-    json isSuccess: false, message: 'Domain is not registered'
+    'Domain is not registered'
   else
-    json isSuccess: true, log: get_log("/var/log/nginx/#{domain.domain}/access.log")
+    get_log("/var/log/nginx/#{domain.domain}/access.log")
   end
 end
 
@@ -72,9 +72,9 @@ get '/error_log/*' do |d|
   domain = Domain.find_by(domain: d)
   if domain.nil?
     status 404
-    json isSuccess: false, message: 'Domain is not registered'
+    'Domain is not registered'
   else
-    json isSuccess: true, log: get_log("/var/log/nginx/#{domain.domain}/error.log")
+    get_log("/var/log/nginx/#{domain.domain}/error.log")
   end
 end
 
@@ -95,7 +95,7 @@ def delete_route(domain)
 end
 
 def reset_log(domain)
-  return unless CONFIG[ENV]['nginx']['app_log']
+  return unless CONFIG.nginx.app_log
 
   `mkdir /var/log/nginx/#{domain}`
   `rm -rf /var/log/nginx/#{domain}/*`
@@ -109,7 +109,7 @@ def get_log(path)
 end
 
 def write_config_file(params)
-  path = Pathname.new(CONFIG[ENV]['nginx']['conf_dir'])
+  path = Pathname.new(CONFIG.nginx.conf_dir)
   path += params['domain'] + '.conf'
 
   auth_uri = URI.parse(params['auth_url']).normalize unless params['auth_url'].nil?
@@ -139,8 +139,7 @@ def delete_config_file(domain)
 end
 
 def delete_ssl_certs(domain)
-  lets_conf = CONFIG[ENV]['lets']
-  return unless lets_conf['enable']
+  return unless CONFIG.lets.enable
 
   # 複数同じ証明書Dirを使ってる場合は最後の１つになるまで消さない
   `rm -rf #{domain.lets_live_path}` unless Domain.where(lets_live_path: domain.lets_live_path).size > 1
@@ -148,7 +147,7 @@ def delete_ssl_certs(domain)
 end
 
 def reload_nginx
-  cmd = CONFIG[ENV]['nginx']['reload_cmd']
+  cmd = CONFIG.nginx.reload_cmd
   NGINX_LOCK.synchronize do
     o, e, s = Open3.capture3(cmd)
     fail "nginx reload faild!" unless s.success?
