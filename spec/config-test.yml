@@ -1,0 +1,11 @@
+env1:
+  obj1: hello
+  obj2:
+    obj2_1: hello
+    obj2_2: hello
+env2:
+  obj1: hello
+  obj2:
+    obj2_1: hello
+    obj2_2: hello
+
