@@ -46,6 +46,7 @@ server {
     internal;
 
     proxy_set_header X-Request-Url $scheme://$host$request_uri;
+    proxy_set_header Content-Length "";
     proxy_pass_request_body off;
     proxy_pass <%= auth_uri.to_s %>;
   }
