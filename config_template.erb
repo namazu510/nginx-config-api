@@ -27,9 +27,9 @@ server {
   <% if use_lets %>
   # SSL setting
   include "includes/lets.conf";
-  ssl_trusted_certificate <%= cert_files[:live][:path].to_s %>/fullchain.pem;
-  ssl_certificate         <%= cert_files[:live][:path].to_s %>/fullchain.pem;
-  ssl_certificate_key     <%= cert_files[:live][:path].to_s %>/privkey.pem;
+  ssl_trusted_certificate <%= domain.lets_live_path %>/fullchain.pem;
+  ssl_certificate         <%= domain.lets_live_path %>/fullchain.pem;
+  ssl_certificate_key     <%= domain.lets_live_path %>/privkey.pem;
   <% end %>
 
   <% if dummy_ssl %>

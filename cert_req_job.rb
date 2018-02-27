@@ -71,7 +71,6 @@ timers.every(options[:cert_interval]) do
   domains.each do |domain|
     use_lets = true
     dummy_ssl = false
-    cert_files = files
     erb = ERB.new(File.read('./config_template.erb'))
     File.open(domain.conf_path, mode = 'w') do |f|
       auth_uri = URI.parse(domain.auth_url) if domain.use_auth
